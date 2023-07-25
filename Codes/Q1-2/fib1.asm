@@ -1,148 +1,74 @@
-section .bss
-    n resd 1         ; Buffer to store the input value n
-    result resb 12   ; Buffer to store the result (max 12 bytes for 32-bit integer)
-
 section .text
-    global _start
+    default rel
+    extern printf
+    global main
 
-_start:
-    ; Read the input value n
-    mov eax, 3       ; syscall for sys_read
-    mov ebx, 0       ; file descriptor 0 (stdin)
-    mov ecx, n       ; pointer to the buffer to store n
-    mov edx, 4       ; number of bytes to read (4 bytes for int)
-    int 0x80         ; make syscall
+main:
+    ; Create a stack-frame, re-aligning the stack to 16-byte alignment before calls
+    push rbp
 
-    ; Convert the input value from ASCII to integer (atoi)
-    mov ebx, [n]     ; pointer to the input value n
-    call atoi
-
-    ; Calculate the nth Fibonacci number
-    mov eax, ebx     ; Move n to EAX for calculation
+    ; Set the value of n to the desired Fibonacci number (e.g., 10 for the 10th Fibonacci number)
+    mov rdi, fmt
+    mov rsi, 10     ; Replace 10 with the desired value of n
     call fibonacci
 
-    ; Convert the result to ASCII and store it in the result buffer
-    mov eax, ebx     ; Copy the result to EAX
-    mov edi, result  ; Pointer to the buffer to store the result
-    call itoa
+    ; Print the result
+    mov rdi, fmt_result
+    mov rsi, rax    ; The result of the Fibonacci function is stored in rax
+    call printf wrt ..plt
+    
+    pop rbp         ; Pop stack
 
-    ; Display the output message
-    mov eax, 4        ; syscall for sys_write
-    mov ebx, 1        ; file descriptor 1 (stdout)
-    mov ecx, result   ; pointer to the output message
-    call strlen       ; Get the length of the result
-    mov edx, eax      ; Length of the result
-    int 0x80          ; make syscall
-
-    ; Display a newline character
-    mov eax, 4        ; syscall for sys_write
-    mov ebx, 1        ; file descriptor 1 (stdout)
-    mov ecx, newline  ; pointer to the newline character
-    mov edx, 1        ; number of bytes to write (1 character)
-    int 0x80          ; make syscall
-
-    ; Exit the program
-    mov eax, 1        ; syscall for sys_exit
-    xor ebx, ebx      ; exit code 0
-    int 0x80          ; make syscall
-
-fibonacci:
-    ; Calculate the nth Fibonacci number iteratively
-    ; Input: n (in EAX)
-    ; Output: nth Fibonacci number (in EAX)
-
-    ; Check if n is 0 or 1 (special cases)
-    cmp eax, 0
-    je .fibonacci_done
-    cmp eax, 1
-    je .fibonacci_done
-
-    ; Initialize variables to hold the last two Fibonacci numbers
-    xor ebx, ebx  ; F(n-2)
-    mov ecx, 1    ; F(n-1)
-
-    ; Loop to calculate the nth Fibonacci number
-.fibonacci_loop:
-    ; Calculate F(n) = F(n-1) + F(n-2)
-    add ecx, ebx
-
-    ; Update variables for the next iteration
-    xchg ecx, ebx  ; F(n-2) = F(n-1), F(n-1) = F(n)
-
-    ; Decrement the counter
-    dec eax
-
-    ; Check if we have reached the last Fibonacci number (F(n))
-    jnz .fibonacci_loop
-
-.fibonacci_done:
-    ; The result (the nth Fibonacci number) is now in the ecx register
-    mov eax, ecx
-    ret
-
-itoa:
-    ; Convert an integer to ASCII representation
-    ; Input: Integer to convert (in EAX)
-    ; Output: ASCII representation (null-terminated string) in EDI
-
-    mov edi, result ; Pointer to the buffer (output)
-    mov ecx, 10     ; Base 10 for division
-    add edi, 11     ; Move the pointer to the end of the buffer (12 bytes max for 32-bit integer)
-
-.reverse_loop:
-    xor edx, edx   ; Clear the remainder
-    div ecx        ; Divide EAX by 10, quotient in EAX, remainder in EDX
-    add dl, '0'    ; Convert the digit to ASCII
-    dec edi        ; Move pointer back to the previous position
-    mov [edi], dl  ; Store the ASCII digit
-
-    test eax, eax  ; Check if the quotient is zero
-    jnz .reverse_loop
-
-    ; Null-terminate the string
-    inc edi
-    mov byte [edi], 0
-
-    ret
-
-atoi:
-    ; Convert an ASCII string to an integer
-    ; Input: Pointer to the ASCII string (in EBX)
-    ; Output: Integer value (in EAX)
-
-    xor eax, eax   ; Clear the result (accumulator)
-    xor ecx, ecx   ; Clear the digit counter
-
-.convert_loop:
-    movzx edx, byte [ebx + ecx]   ; Load the next ASCII character
-    test dl, dl                   ; Check if it's null-terminated
-    jz .convert_done
-
-    sub edx, '0'   ; Convert ASCII character to a digit
-    imul eax, eax, 10   ; Multiply the result by 10
-    add eax, edx       ; Add the digit to the result
-    inc ecx            ; Move to the next character
-    jmp .convert_loop
-
-.convert_done:
-    ret
-
-strlen:
-    ; Calculate the length of a null-terminated string
-    ; Input: Pointer to the string (in ECX)
-    ; Output: Length of the string (in EAX)
-
-    xor eax, eax     ; Clear the length counter
-
-.length_loop:
-    cmp byte [ecx], 0 ; Check for null-termination
-    je .length_done
-    inc eax           ; Increment the length counter
-    inc ecx           ; Move to the next character
-    jmp .length_loop
-
-.length_done:
-    ret
+    mov rax, 0      ; Exit code 0
+    ret             ; Return
 
 section .data
-    newline db 10    ; Define the newline character
+    fmt:        db "Calculating Fibonacci(%d)...", 10, 0
+    fmt_result: db "Fibonacci(%d) = %d", 10, 0
+
+section .bss
+    fib_result resq 1   ; Buffer to store the result of the Fibonacci calculation
+
+section .text
+
+; Function to calculate the nth Fibonacci number
+fibonacci:
+    push rbp
+    mov rbp, rsp
+
+    ; Get the value of n from the first function argument (rdi)
+    mov rax, rdi
+
+    ; Base case: Fibonacci(0) and Fibonacci(1) are both 1
+    cmp rax, 1
+    jbe .fibonacci_base
+
+    ; Allocate space for Fibonacci(n) and Fibonacci(n-1) on the stack
+    sub rsp, 16
+
+    ; Calculate Fibonacci(n-1) recursively
+    dec rax
+    mov rdi, rax        ; Pass n-1 as the first argument to the recursive call
+    call fibonacci
+
+    ; Store the result of Fibonacci(n-1) in [rbp - 8]
+    mov qword [rbp - 8], rax
+
+    ; Calculate Fibonacci(n-2) recursively
+    dec rax
+    mov rdi, rax        ; Pass n-2 as the first argument to the recursive call
+    call fibonacci
+
+    ; Add Fibonacci(n-1) and Fibonacci(n-2) to get Fibonacci(n)
+    add rax, qword [rbp - 8]
+
+    ; Clean up the stack
+    add rsp, 16
+
+    pop rbp
+    ret
+
+.fibonacci_base:
+    mov rax, 1          ; Fibonacci(0) and Fibonacci(1) are both 1
+    pop rbp
+    ret
