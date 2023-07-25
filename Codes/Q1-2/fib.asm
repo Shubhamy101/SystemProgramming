@@ -1,50 +1,55 @@
+section .data
+    out_msg db "The nth Fibonacci number is: %d", 10, 0
+
 section .bss
-    fib resq 1 ; Variable to store the nth Fibonacci number
+    fib resb 4
 
 section .text
     global _start
 
 _start:
-    ; Read the value of n from the command line argument
-    mov rdi, 1              ; File descriptor 1 points to stdout (standard output)
-    mov rsi, rdx            ; rdx register contains the pointer to the arguments array
-    mov rdx, 10             ; Read up to 10 bytes (we assume n won't exceed 10 digits)
-    call read_int
+    ; Programmer-defined constant for the value of n
+    mov eax, 10  ; Change this value to find a different Fibonacci number
 
-    ; Check if the input is a valid positive integer (n >= 0)
-    test rax, rax           ; Check if rax (the input) is zero
-    js invalid_input        ; If it's negative, jump to the invalid_input label
+    ; Check if n is 0 or 1 (special cases)
+    cmp eax, 0
+    je .fibonacci_done
+    cmp eax, 1
+    je .fibonacci_done
 
-    ; Calculate the nth Fibonacci number iteratively
-    mov rsi, 0              ; Initialize F(0) = 0
-    mov rdi, 1              ; Initialize F(1) = 1
+    ; Initialize variables to hold the last two Fibonacci numbers
+    mov ebx, 0  ; F(n-2)
+    mov edx, 1  ; F(n-1)
 
-    cmp rax, 1              ; Check if n is less than or equal to 1
-    jbe fib_done            ; If yes, we are done as F(0) or F(1) is the result
+    ; Loop to calculate the nth Fibonacci number
+.fibonacci_loop:
+    ; Calculate F(n) = F(n-1) + F(n-2)
+    add edx, ebx
 
-fib_loop:
-    add rsi, rdi            ; F(n) = F(n-1) + F(n-2)
-    mov rcx, rdi            ; Save F(n-1) in rcx
-    mov rdi, rsi            ; Save F(n) in rdi
-    mov rsi, rcx            ; Save F(n-2) in rsi
-    dec rax                 ; Decrement n
+    ; Update variables for the next iteration
+    mov ebx, edx  ; F(n-2) = F(n-1)
+    mov edx, eax  ; F(n-1) = F(n)
 
-    cmp rax, 1              ; Check if n is less than or equal to 1
-    jg fib_loop             ; If yes, continue the loop
+    ; Decrement the counter
+    dec eax
 
-fib_done:
-    ; The result (F(n)) is stored in the rdi register.
-    ; You can use it for further operations or print it as needed.
+    ; Check if we have reached the first Fibonacci number (F(1))
+    cmp eax, 1
+    jge .fibonacci_loop
+
+.fibonacci_done:
+    ; The result (the nth Fibonacci number) is now in the edx register
+
+    ; Display the result
+    push edx
+    push dword out_msg
+    call printf
+    add esp, 8  ; Clean up the stack after the function call
 
     ; Exit the program
-    mov rax, 60             ; syscall number for exit
-    xor rdi, rdi            ; Exit code 0
-    syscall
+    mov eax, 1  ; syscall for sys_exit
+    xor ebx, ebx  ; exit code 0
+    int 0x80  ; make syscall
 
-invalid_input:
-    ; Handle invalid input (negative n)
-    ; You can implement an error message or simply exit with an error code here.
-    ; For simplicity, we will exit with an error code of 1.
-    mov rax, 60             ; syscall number for exit
-    mov rdi, 1              ; Error code 1
-    syscall
+; Function to print the result using printf from the C library
+extern printf
