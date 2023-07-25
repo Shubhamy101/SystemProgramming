@@ -11,6 +11,10 @@ _start:
     ; Programmer-defined constant for the value of n
     mov eax, 10  ; Change this value to find a different Fibonacci number
 
+    ; Initialize variables to hold the last two Fibonacci numbers
+    mov ebx, 0  ; F(n-2)
+    mov edx, 1  ; F(n-1)
+
     ; Check if n is 0 or 1 (special cases)
     cmp eax, 0
     je .fibonacci_done
