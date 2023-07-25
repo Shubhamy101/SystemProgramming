@@ -40,8 +40,9 @@ _start:
     dec eax
 
     ; Display the current Fibonacci number
-    mov eax, ecx      ; Copy the Fibonacci number to EAX for display
+    push eax
     call display_number  ; Call the display_number function to print the Fibonacci number
+    pop eax
 
     ; Check if we have reached the last Fibonacci number (F(n))
     jnz .fibonacci_loop
