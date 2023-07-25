@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#P rompt to user for directory name 
+# Prompt to user for directory name 
 read -p "Enter the name of directory: " in_dir
 
 # If directory does not exists, display error
