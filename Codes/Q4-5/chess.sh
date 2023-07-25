@@ -1,10 +1,10 @@
 #!/bin/bash
 
-size=8
+n=8
 
-for ((i = 0; i < size; i++));
+for ((i = 0; i < n; i++));
 do
-    for ((j = 0; j < size; j++));
+    for ((j = 0; j < n; j++));
     do
         if (((i + j) % 2 == 0)); 
         then
