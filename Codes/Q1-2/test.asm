@@ -4,6 +4,7 @@ section .data
     fmt_result db "Sum: %d", 10, 0
 
 section .text
+    extern printf
     global _start
 
 _start:
