@@ -1,5 +1,3 @@
-A small program that calculates and prints terms of the Fibonacci series 
-
 ; fibo.asm
 ; assemble using nasm:   
 ; nasm -o fibo.com -f bin fibo.asm
