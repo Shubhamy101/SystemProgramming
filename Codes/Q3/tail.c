@@ -78,8 +78,6 @@ int main(int argc, char *argv[]) {
         free(linePtr[i]);
     }
 
-    printf("\n");
-
     fclose(file);
     return 0;
 }
