@@ -3,7 +3,7 @@ section	.text
 	
 _start:	                ;tell linker entry point
    mov	eax,'3'
-   sub     eax, '0'
+   sub   eax, '0'
 	
    mov 	ebx, '4'
    sub     ebx, '0'
@@ -27,7 +27,8 @@ _start:	                ;tell linker entry point
    int	0x80	         ;call kernel
 	
 section .data
-msg db "The sum is:", 0xA,0xD 
+msg db "The nth fibonacci number is:", 0xA,0xD 
 len equ $ - msg   
 segment .bss
-sum resb 1
+
+sum resb 4
