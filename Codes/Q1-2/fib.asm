@@ -5,7 +5,7 @@ section .data
     nl db 10  ; Define the newline character
 
 section .bss
-    fib resb 16  ; Buffer to store the ASCII representation of the Fibonacci number
+    fib resb 32  ; Buffer to store the ASCII representation of the Fibonacci number
 
 section .text
     global _start
@@ -43,8 +43,14 @@ _start:
 
     ; Clear the fib buffer before storing the ASCII representation of the number
     xor edi, edi     ; Clear EDI (used for buffer index)
-    mov byte [fib + edi], '0'  ; Initialize the buffer with '0' (in case it's a single-digit number)
-    mov esi, ecx     ; Copy the Fibonacci number to ESI
+.clear_buffer_loop:
+    mov byte [fib + edi], 0  ; Clear the byte at each position in the buffer
+    inc edi
+    cmp edi, 32
+    jnz .clear_buffer_loop
+
+    ; Copy the Fibonacci number to ESI for conversion
+    mov esi, ecx
 
     ; Convert the result (F(n)) to a string
 .convert_to_string:
@@ -53,7 +59,7 @@ _start:
     mov ebx, 10      ; Divisor (10)
     div ebx          ; Divide EAX by 10, quotient in EAX, remainder in EDX
     add dl, '0'      ; Convert the digit to ASCII character
-    inc edi          ; Move to the next position in the buffer
+    dec edi          ; Move to the previous position in the buffer
     mov byte [fib + edi], dl  ; Store the ASCII digit in the fib buffer
     test eax, eax    ; Check if EAX is zero (F(n) has been completely converted)
     jnz .convert_to_string
