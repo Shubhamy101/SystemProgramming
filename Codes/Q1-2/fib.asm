@@ -5,7 +5,7 @@ section .data
     nl db 10
 
 section .bss
-    fib resb 12  ; Buffer to store the ASCII representation of the Fibonacci number
+    fib resb 16  ; Buffer to store the ASCII representation of the Fibonacci number
 
 section .text
     global _start
@@ -75,8 +75,8 @@ _start:
 
     ; Move to the previous position in the buffer
     dec edi
-    test edi, edi
-    jns .display_loop
+    cmp edi, 0
+    jge .display_loop
 
     ; Display a newline character
     mov eax, 4        ; syscall for sys_write
