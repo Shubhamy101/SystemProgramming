@@ -2,7 +2,7 @@ section .data
     out_msg db "The nth Fibonacci number is: ", 0
     out_msg_len equ $ - out_msg
 
-    nl db 10
+    nl db 10  ; Define the newline character
 
 section .bss
     fib resb 16  ; Buffer to store the ASCII representation of the Fibonacci number
@@ -35,9 +35,8 @@ _start:
     ; Decrement the counter
     dec eax
 
-    ; Check if we have reached the second Fibonacci number (F(1))
-    cmp eax, 1
-    jge .fibonacci_loop
+    ; Check if we have reached the last Fibonacci number (F(n))
+    jnz .fibonacci_loop
 
 .fibonacci_done:
     ; The result (the nth Fibonacci number) is now in the ecx register
