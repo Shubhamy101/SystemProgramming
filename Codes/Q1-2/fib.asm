@@ -12,7 +12,7 @@ section .text
 
 _start:
     ; Programmer-defined constant for the value of n
-    mov eax, 10  ; Change this value to find a different Fibonacci number
+    mov eax, 10  ; Change this value to find the 10th Fibonacci number
 
     ; Initialize variables to hold the last two Fibonacci numbers
     mov ebx, 0  ; F(n-2)
@@ -43,16 +43,16 @@ _start:
 .fibonacci_done:
     ; The result (the nth Fibonacci number) is now in the ecx register
 
-    ; Display the output message
-    mov eax, 4        ; syscall for sys_write
-    mov ebx, 1        ; file descriptor 1 (stdout)
-    mov ecx, out_msg  ; pointer to the output message
-    mov edx, out_msg_len
-    int 0x80          ; make syscall
+    ; Clear the fib buffer before storing the ASCII representation of the number
+    mov edi, fib     ; Point to the start of the fib buffer
+    mov ecx, 10      ; Number of DWORDs to clear (10 DWORDs, each 4 bytes)
+    xor eax, eax     ; Clear the value to store in the buffer (0)
+    rep stosd        ; Fill the buffer with zeros
 
     ; Convert the result (F(n)) to a string
     mov edi, 10       ; Divisor (10)
     xor esi, esi      ; Counter for the number of digits in the Fibonacci number
+    xor ecx, ecx      ; Clear ECX before storing digits
 
 .convert_to_string:
     xor edx, edx      ; Clear EDX before the division
@@ -62,6 +62,13 @@ _start:
     inc esi           ; Increment the digit counter
     test eax, eax     ; Check if EAX is zero (F(n) has been completely converted)
     jnz .convert_to_string
+
+    ; Display the output message
+    mov eax, 4        ; syscall for sys_write
+    mov ebx, 1        ; file descriptor 1 (stdout)
+    mov ecx, out_msg  ; pointer to the output message
+    mov edx, out_msg_len
+    int 0x80          ; make syscall
 
     ; Display the Fibonacci number digit by digit
 .display_loop:
