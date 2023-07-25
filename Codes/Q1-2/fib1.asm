@@ -34,6 +34,13 @@ _start:
     mov edx, eax      ; Length of the result
     int 0x80          ; make syscall
 
+    ; Display a newline character
+    mov eax, 4        ; syscall for sys_write
+    mov ebx, 1        ; file descriptor 1 (stdout)
+    mov ecx, newline  ; pointer to the newline character
+    mov edx, 1        ; number of bytes to write (1 character)
+    int 0x80          ; make syscall
+
     ; Exit the program
     mov eax, 1        ; syscall for sys_exit
     xor ebx, ebx      ; exit code 0
@@ -140,3 +147,6 @@ strlen:
 
 .length_done:
     ret
+
+section .data
+    newline db 10    ; Define the newline character
