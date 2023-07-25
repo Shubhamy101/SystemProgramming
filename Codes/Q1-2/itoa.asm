@@ -22,7 +22,7 @@ start_iteration:
     dec ecx             ; We already have F0 and F1 calculated, so we need to calculate (n - 1) iterations
 
 fibonacci_loop:
-    add eax, dword [sun] ; Calculate the next Fibonacci number (F2 = F0 + F1)
+    add eax, dword [sum] ; Calculate the next Fibonacci number (F2 = F0 + F1)
     xchg eax, dword [sum] ; Store the new Fibonacci number and move the previous one to EAX
 
     loop fibonacci_loop ; Decrement ECX and loop until ECX becomes zero
