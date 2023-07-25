@@ -38,7 +38,6 @@
 ; this is just the number of digits for the term counter
 	cntDigits   equ 6	; number of digits for counter
 
-        org     100h            ; this is a DOS com file
 ;****************************************************************************
 ;****************************************************************************
 main:	
