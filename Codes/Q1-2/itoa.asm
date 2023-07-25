@@ -1,65 +1,67 @@
-section .data
-    output_format db "%s", 0     ; Format string for printing the result
-
 section .bss
-    num resq 1                   ; Variable to store the input number
-    buffer resb 11               ; Buffer to store the ASCII representation (up to 10 digits + null terminator)
+    num resb 10         ; Buffer to store ASCII representation of the number
+    len equ $ - num     ; Length of the buffer (10 bytes)
 
 section .text
     global _start
 
 _start:
-    ; Read the integer from the command-line argument
-    mov edi, 1                   ; File descriptor 1 points to stdout (standard output)
-    mov esi, rdx                 ; rdx register contains the pointer to the arguments array
-    mov edx, 10                  ; Read up to 10 bytes (we assume the number won't exceed 10 digits)
-    call read_int
+    ; Read an integer from the user (assuming a 64-bit Linux system)
+    mov rdi, 0          ; File descriptor 0 (stdin)
+    lea rsi, [num]      ; Buffer to store the input
+    mov rdx, len        ; Maximum number of bytes to read
+    mov rax, 0          ; System call number for sys_read (0)
+    syscall
 
-    ; Convert the integer to ASCII
-    mov edi, buffer              ; Destination buffer for the ASCII string
+    ; Convert the ASCII input to an integer (using atoi function)
+    call ascii_to_int
+
+    ; Convert the integer to an ASCII string
     call int_to_ascii
 
-    ; Print the result
-    mov esi, edi                 ; rsi holds the pointer to the ASCII string
-    call print_string
+    ; Print the ASCII string (assuming a 64-bit Linux system)
+    mov rdi, 1          ; File descriptor 1 (stdout)
+    lea rsi, [num]      ; Buffer containing the ASCII string
+    mov rdx, r8         ; Length of the ASCII string
+    mov rax, 1          ; System call number for sys_write (1)
+    syscall
 
     ; Exit the program
-    mov eax, 60                  ; syscall number for exit
-    xor edi, edi                 ; Exit code 0
+    mov rax, 60         ; System call number for sys_exit (60)
+    xor rdi, rdi        ; Exit code 0
     syscall
 
-; Function to convert an integer to an ASCII string
-; Input:
-;   rdi: Destination buffer for the ASCII string
-;   rsi: Input integer
-int_to_ascii:
-    mov ecx, 10                 ; Set divisor (base 10)
-    mov eax, esi                ; Copy the integer to rax
-    mov ebx, edi                ; Copy the buffer address to rbx
-
-    add ebx, 10                 ; Move the buffer pointer to the end (for null terminator)
-
-    mov byte [ebx], 0           ; Null-terminate the string
-
-int_to_ascii_loop:
-    dec ebx                     ; Move the buffer pointer back
-    xor edx, edx                ; Clear rdx for division
-    div ecx                     ; Divide rax by 10, quotient in rax, remainder in rdx
-    add dl, '0'                 ; Convert the remainder to ASCII
-    mov [ebx], dl               ; Store the ASCII character in the buffer
-
-    test eax, eax               ; Check if quotient is zero
-    jnz int_to_ascii_loop       ; If not, continue the loop
-
-    mov edi, ebx                ; Set rdi to point to the beginning of the ASCII string
+; Function to convert ASCII input to an integer (atoi)
+ascii_to_int:
+    xor rax, rax        ; Clear rax to store the result
+    xor rcx, rcx        ; Clear rcx (loop counter)
+.loop:
+    movzx r8b, byte [rsi + rcx] ; Load the next ASCII character
+    test r8b, r8b       ; Check for the null terminator (end of the string)
+    jz .done            ; If null terminator found, exit the loop
+    sub r8b, '0'        ; Convert ASCII character to integer (digit)
+    imul rax, rax, 10   ; Multiply the current result by 10
+    add rax, r8         ; Add the new digit to the result
+    inc rcx             ; Move to the next character
+    jmp .loop           ; Repeat the loop
+.done:
     ret
 
-; Function to print a null-terminated string
-; Input:
-;   rdi: Pointer to the null-terminated string to be printed
-print_string:
-    mov eax, 0x1               ; syscall number for write
-    mov edx, 0xFFFFFFFF        ; Set the maximum number of bytes to write (large enough)
-    xor esi, esi               ; rsi = 0, as we start writing from the beginning of the string
-    syscall
+; Function to convert an integer to an ASCII string
+int_to_ascii:
+    add rdx, rsi        ; Point rdx to the end of the buffer
+    mov byte [rdx], 0   ; Null-terminate the string
+.reverseLoop:
+    dec rdx             ; Move back through the buffer
+    mov rbx, 10         ; Divisor (to convert to ASCII digits)
+    xor rcx, rcx        ; Clear rcx (loop counter)
+.nextDigit:
+    xor rdx, rdx        ; Clear rdx to get the remainder
+    div rbx             ; Divide rax by 10, result in rax, remainder in rdx
+    add dl, '0'         ; Convert the remainder to ASCII
+    mov [rdx], dl       ; Store the ASCII digit in the buffer
+    inc rcx             ; Move to the next position in the buffer
+    test rax, rax       ; Check if quotient is zero (end of conversion)
+    jnz .nextDigit      ; If not zero, continue the loop
+    mov r8, rcx         ; Store the length of the ASCII string in r8
     ret
