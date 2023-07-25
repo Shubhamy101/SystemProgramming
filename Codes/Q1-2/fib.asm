@@ -1,9 +1,11 @@
 section .data
     out_msg db "The nth Fibonacci number is: ", 0
+    out_msg_len equ $ - out_msg
+
     nl db 10
 
 section .bss
-    fib resd 1
+    fib resd 10  ; Buffer to store the ASCII representation of the Fibonacci number
 
 section .text
     global _start
@@ -49,10 +51,8 @@ _start:
     int 0x80          ; make syscall
 
     ; Convert the result (F(n)) to a string
-    mov eax, ecx      ; Copy the Fibonacci number to EAX (result in ECX)
     mov edi, 10       ; Divisor (10)
     xor esi, esi      ; Counter for the number of digits in the Fibonacci number
-    xor ecx, ecx      ; Clear ECX before storing digits
 
 .convert_to_string:
     xor edx, edx      ; Clear EDX before the division
