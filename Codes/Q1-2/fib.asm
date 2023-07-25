@@ -65,17 +65,20 @@ _start:
     mov edx, out_msg_len
     int 0x80          ; make syscall
 
+    ; Move EDI to the end of the buffer (pointing to the last digit)
+    lea edi, [fib + edi]
+
     ; Display the Fibonacci number digit by digit
 .display_loop:
     mov eax, 4        ; syscall for sys_write
     mov ebx, 1        ; file descriptor 1 (stdout)
-    lea ecx, [fib + edi] ; pointer to the digit character
+    mov ecx, edi      ; pointer to the digit character
     mov edx, 1        ; number of bytes to write (1 character)
     int 0x80          ; make syscall
 
     ; Move to the previous position in the buffer
     dec edi
-    cmp edi, 0
+    cmp edi, fib
     jge .display_loop
 
     ; Display a newline character
