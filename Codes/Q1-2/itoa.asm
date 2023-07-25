@@ -14,7 +14,7 @@ _start:
 
 start_iteration:
     ; Initialize the first two Fibonacci numbers (F0 = 0, F1 = 1)
-    mov dword [fib_number], 0   ; F0
+    mov dword [sum], 0   ; F0
     mov eax, 1                  ; F1
 
     ; Loop to calculate the Fibonacci number iteratively
@@ -22,8 +22,8 @@ start_iteration:
     dec ecx             ; We already have F0 and F1 calculated, so we need to calculate (n - 1) iterations
 
 fibonacci_loop:
-    add eax, dword [fib_number] ; Calculate the next Fibonacci number (F2 = F0 + F1)
-    xchg eax, dword [fib_number] ; Store the new Fibonacci number and move the previous one to EAX
+    add eax, dword [sun] ; Calculate the next Fibonacci number (F2 = F0 + F1)
+    xchg eax, dword [sum] ; Store the new Fibonacci number and move the previous one to EAX
 
     loop fibonacci_loop ; Decrement ECX and loop until ECX becomes zero
 
