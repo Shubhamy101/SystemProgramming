@@ -1,6 +1,6 @@
 section .bss
     n resd 1         ; Buffer to store the input value n
-    result resd 1    ; Buffer to store the result
+    result resb 12   ; Buffer to store the result (max 12 bytes for 32-bit integer)
 
 section .text
     global _start
@@ -14,7 +14,7 @@ _start:
     int 0x80         ; make syscall
 
     ; Convert the input value from ASCII to integer (atoi)
-    mov ebx, n       ; pointer to the input value n
+    mov ebx, [n]     ; pointer to the input value n
     call atoi
 
     ; Calculate the nth Fibonacci number
@@ -22,8 +22,8 @@ _start:
     call fibonacci
 
     ; Convert the result to ASCII and store it in the result buffer
-    mov ebx, eax     ; Copy the result to EBX
-    mov ecx, result  ; Pointer to the buffer to store the result
+    mov eax, ebx     ; Copy the result to EAX
+    mov edi, result  ; Pointer to the buffer to store the result
     call itoa
 
     ; Display the output message
@@ -82,13 +82,12 @@ fibonacci:
 
 itoa:
     ; Convert an integer to ASCII representation
-    ; Input: Integer to convert (in EBX)
-    ; Output: ASCII representation (null-terminated string) in ECX
+    ; Input: Integer to convert (in EAX)
+    ; Output: ASCII representation (null-terminated string) in EDI
 
-    mov edi, ecx   ; Pointer to the buffer (output)
-    mov eax, ebx   ; Copy the input integer
-    mov ecx, 10    ; Base 10 for division
-    add edi, 10    ; Move the pointer to the end of the buffer
+    mov edi, result ; Pointer to the buffer (output)
+    mov ecx, 10     ; Base 10 for division
+    add edi, 11     ; Move the pointer to the end of the buffer (12 bytes max for 32-bit integer)
 
 .reverse_loop:
     xor edx, edx   ; Clear the remainder
@@ -103,9 +102,6 @@ itoa:
     ; Null-terminate the string
     inc edi
     mov byte [edi], 0
-
-    ; Move the pointer to the beginning of the buffer (ECX)
-    mov ecx, edi
 
     ret
 
