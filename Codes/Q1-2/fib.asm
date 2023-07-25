@@ -5,7 +5,7 @@ section .data
     nl db 10
 
 section .bss
-    fib resd 1
+    fib resb 12  ; Buffer to store the ASCII representation of the Fibonacci number
 
 section .text
     global _start
@@ -41,6 +41,23 @@ _start:
 .fibonacci_done:
     ; The result (the nth Fibonacci number) is now in the eax register
 
+    ; Clear the fib buffer before storing the ASCII representation of the number
+    xor edi, edi     ; Clear EDI (used for buffer index)
+    mov byte [fib + edi], '0'  ; Initialize the buffer with '0' (in case it's a single-digit number)
+    mov esi, eax     ; Copy the Fibonacci number to ESI
+
+    ; Convert the result (F(n)) to a string
+.convert_to_string:
+    mov eax, esi     ; Restore the Fibonacci number from ESI
+    xor edx, edx     ; Clear EDX before the division
+    mov ebx, 10      ; Divisor (10)
+    div ebx          ; Divide EAX by 10, quotient in EAX, remainder in EDX
+    add dl, '0'      ; Convert the digit to ASCII character
+    inc edi          ; Move to the next position in the buffer
+    mov byte [fib + edi], dl  ; Store the ASCII digit in the fib buffer
+    test eax, eax    ; Check if EAX is zero (F(n) has been completely converted)
+    jnz .convert_to_string
+
     ; Display the output message
     mov eax, 4        ; syscall for sys_write
     mov ebx, 1        ; file descriptor 1 (stdout)
@@ -48,33 +65,18 @@ _start:
     mov edx, out_msg_len
     int 0x80          ; make syscall
 
-    ; Convert the result (F(n)) to a string
-    mov edi, 10       ; Divisor (10)
-    mov esi, fib      ; Pointer to the buffer to store the ASCII representation of the number
-    mov ebx, 0        ; Clear EBX to calculate the number of digits
-
-.convert_to_string:
-    xor edx, edx      ; Clear EDX before the division
-    div edi           ; Divide EAX by 10, quotient in EAX, remainder in EDX
-    add dl, '0'       ; Convert the digit to ASCII character
-    mov [esi], dl     ; Store the ASCII digit in the fib buffer
-    inc esi           ; Move to the next position in the buffer
-    inc ebx           ; Increment the digit counter
-    test eax, eax     ; Check if EAX is zero (F(n) has been completely converted)
-    jnz .convert_to_string
-
     ; Display the Fibonacci number digit by digit
 .display_loop:
-    dec esi           ; Move the buffer pointer back to the last digit
     mov eax, 4        ; syscall for sys_write
     mov ebx, 1        ; file descriptor 1 (stdout)
-    mov ecx, esi      ; pointer to the digit character
+    lea ecx, [fib + edi] ; pointer to the digit character
     mov edx, 1        ; number of bytes to write (1 character)
     int 0x80          ; make syscall
 
-    ; Continue displaying the digits until all are printed
-    test esi, esi
-    jnz .display_loop
+    ; Move to the previous position in the buffer
+    dec edi
+    test edi, edi
+    jns .display_loop
 
     ; Display a newline character
     mov eax, 4        ; syscall for sys_write
