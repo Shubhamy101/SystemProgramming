@@ -1,82 +1,85 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define MAX_LINE_LENGTH 1024
+void error(char *);
 
-// Struct to hold a line of text
-typedef struct {
-    char text[MAX_LINE_LENGTH];
-} Line;
+int readLine(char s[], FILE* fptr) {
 
-// Function to print the last 'n' lines from the circular buffer
-void printLastNLines(Line *buffer, int bufferSize, int n) {
-    int start = 0;
-    int count = 0;
-    int i;
-
-    for (i = 0; i < bufferSize; i++) {
-        if (buffer[i].text[0] != '\0') {
-            count++;
-            if (count > n) {
-                start = (start + 1) % bufferSize;
-            }
-        }
+    int i, c;
+    for (i = 0; i < BUFSIZ - 1 && (c = fgetc(fptr)) != EOF && c != '\n'; i++) {
+        s[i] = c;
+    }
+    
+    if (c == '\n') {
+        s[i++] = c;
     }
 
-    printf("Last %d lines:\n", n);
-    for (i = 0; i < n; i++) {
-        printf("%s", buffer[start].text);
-        start = (start + 1) % bufferSize;
-    }
+    s[i] = '\0';
+    return i;
 }
 
+/* print the last n lines of the input */
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        printf("Usage: %s <input_file> <n>\n", argv[0]);
-        return 1;
+
+    char line[BUFSIZ];
+    char *linePtr[BUFSIZ];
+    int i, start, end, n, nlines;
+    FILE *file;
+
+    //Filename to open
+    char filename[] = "input.txt";
+
+    if (argc != 2) {
+        printf("Provide valid arguments with n.\n");
+        exit(1);
     }
 
-    int n = atoi(argv[2]);
+    n = atoi(argv[1]);
+
+    for (i = 0; i < BUFSIZ; i++)
+        linePtr[i] = NULL;
+
     if (n <= 0) {
-        printf("Invalid value of 'n'. It must be a positive integer.\n");
-        return 1;
+        printf("Please provide a positive n.\n");
+        exit(1);
     }
 
-    FILE *file = fopen(argv[1], "r");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", argv[1]);
-        return 1;
+    if ((file = fopen(filename, "r")) == NULL) {
+        printf("Error opening the file.\n");
+        exit(1);
     }
 
-    // Allocate memory for the circular buffer
-    Line *buffer = (Line *)malloc(n * sizeof(Line));
-    if (buffer == NULL) {
-        printf("Memory allocation failed.\n");
-        fclose(file);
-        return 1;
+    end = 0;
+    nlines = 0;
+
+    while (readLine(line, file) > 0) {
+        linePtr[end] = malloc(strlen(line) + 1);
+        strcpy(linePtr[end], line);
+
+        if (++end >= BUFSIZ) {
+            end = 0;
+        }
+
+        nlines++;
     }
 
-    // Initialize the buffer
-    int i;
-    for (i = 0; i < n; i++) {
-        buffer[i].text[0] = '\0';
+    if (n > nlines) {
+        n = nlines;
     }
 
-    // Read the file line by line and update the buffer
-    char line[MAX_LINE_LENGTH];
-    while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
-        int index = i % n;
-        strcpy(buffer[index].text, line);
-        i++;
+    start = end - n;
+    if (start < 0) {
+        start += BUFSIZ;
     }
+
+    for (i = start; n-- > 0; i = (i + 1) % BUFSIZ) {
+        printf("%s", linePtr[i]);
+        free(linePtr[i]);
+    }
+
+    printf("\n");
 
     fclose(file);
-
-    // Print the last 'n' lines
-    printLastNLines(buffer, n, n);
-
-    // Free allocated memory
-    free(buffer);
-
     return 0;
 }
