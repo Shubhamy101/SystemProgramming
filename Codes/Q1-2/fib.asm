@@ -12,40 +12,42 @@ section .text
 
 _start:
     ; Programmer-defined constant for the value of n
-    mov ecx, 10  ; Change this value to find the nth Fibonacci number
+    mov eax, 10  ; Change this value to find the nth Fibonacci number
 
     ; Check if n is 0 or 1 (special cases)
-    cmp ecx, 0
+    cmp eax, 0
     je .fibonacci_done
-    cmp ecx, 1
+    cmp eax, 1
     je .fibonacci_done
 
     ; Initialize variables to hold the last two Fibonacci numbers
-    mov eax, 0  ; F(n-2)
-    mov ebx, 1  ; F(n-1)
+    mov ebx, 0  ; F(n-2)
+    mov ecx, 1  ; F(n-1)
 
     ; Loop to calculate the nth Fibonacci number
 .fibonacci_loop:
     ; Calculate F(n) = F(n-1) + F(n-2)
-    add eax, ebx
+    add ecx, ebx
 
     ; Update variables for the next iteration
-    xchg eax, ebx  ; F(n-2) = F(n-1), F(n-1) = F(n)
+    xchg ecx, ebx  ; F(n-2) = F(n-1), F(n-1) = F(n)
 
     ; Decrement the counter
-    dec ecx
+    dec eax
 
     ; Check if we have reached the second Fibonacci number (F(1))
-    jnz .fibonacci_loop
+    cmp eax, 1
+    jge .fibonacci_loop
 
 .fibonacci_done:
-    ; The result (the nth Fibonacci number) is now in the eax register
+    ; The result (the nth Fibonacci number) is now in the ecx register
 
-    ; Convert the result (F(n)) to a string
+    ; Clear the fib buffer before storing the ASCII representation of the number
     xor edi, edi     ; Clear EDI (used for buffer index)
     mov byte [fib + edi], '0'  ; Initialize the buffer with '0' (in case it's a single-digit number)
-    mov esi, eax     ; Copy the Fibonacci number to ESI
+    mov esi, ecx     ; Copy the Fibonacci number to ESI
 
+    ; Convert the result (F(n)) to a string
 .convert_to_string:
     mov eax, esi     ; Restore the Fibonacci number from ESI
     xor edx, edx     ; Clear EDX before the division
