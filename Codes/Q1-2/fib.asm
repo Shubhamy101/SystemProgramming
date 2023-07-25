@@ -1,5 +1,7 @@
 section .data
     out_msg db "The nth Fibonacci number is: ", 0
+    out_msg_len equ $ - out_msg
+
     nl db 10
 
 section .bss
