@@ -18,7 +18,7 @@ fib:
 
     loop fib
 
-    mov rax, 256
+    and rax, rax
     call _printRAX
  
     mov rax, 60
