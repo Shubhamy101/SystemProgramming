@@ -7,17 +7,27 @@ section .text
  
 _start:
  
-    mov rcx, 6
-    mov rax, 1
-    mov rbx, 1
+    mov rcx, 10     ;rcx have the value n
 
+    mov rax, 0    
+    jle output      ;print 0 if n is less than equal to 0
+
+    mov rax, 1
+    je output       ;print 1 if n is equal to 1
+
+    sub rcx, 3      ;subtracting 3 since we are starting from fib(1) and fib(2)
+    mov rax, 1      ;storing fib(1) in rax
+    mov rbx, 1      ;storing fib(2) in r2x
+
+;To calculate fib iteratively
 fib:
     mov rdx, rax
     add rax, rbx
     mov rbx, rdx
-
     loop fib
 
+;printing value in eax
+output:
     and rax, rax
     call _printRAX
  
