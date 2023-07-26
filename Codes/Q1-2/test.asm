@@ -1,23 +1,43 @@
-section .data
-    num1 dq 10         ; First number (change this to any desired value)
-    num2 dq 20         ; Second number (change this to any desired value)
-    fmt_result db "Sum: %d", 10, 0
+secion .bss
+	digitSpace resb 100
+	digitSpacePos resb 8
 
 section .text
-    extern printf
-    global _start
+	global _start
 
 _start:
-    ; Calculate the sum
-    mov rax, qword [num1]
-    add rax, qword [num2]
+	mov ecx, 10
+	mov esi, 1
+	mov edi, 1
 
-    ; Print the sum
-    mov rdi, fmt_result
-    mov rsi, rax        ; The sum is stored in rax
-    call printf wrt ..plt
+	cmp ecx, 0
+	jle output_fib
 
-    ; Exit the program
-    mov rax, 60         ; System call number for sys_exit (60)
-    xor rdi, rdi        ; Exit code 0
-    syscall
+	cmp ecx, 1
+	je output_fib
+
+fib_loop:
+	add esi, edi
+	xchg esi, edi
+	loop fib_loop
+
+outpub_fib:
+	mov eax, esi
+	call _printEAX
+	mov eax, 60
+	mov edi, 0
+	syscall
+
+_printEAX:
+	mov ecx, digitSpace
+	mov ebx, 10
+	mov [ecx], ebx
+	inc ecx
+	mov [digitSpacePos], ecx
+
+_printEAXLoop:
+	mov edx, 0
+	mov ebx, 10
+	div ebx
+	push eax
+	add edx, 48
