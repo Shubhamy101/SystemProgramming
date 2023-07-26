@@ -6,65 +6,65 @@ section .text
 	global _start
 
 _start:
-	mov ecx, 10
-	mov esi, 1
-	mov edi, 1
+	mov rcx, 10
+	mov rsi, 1
+	mov rdi, 1
 
-	cmp ecx, 0
+	cmp rcx, 0
 	jle output_fib
 
-	cmp ecx, 1
+	cmp rcx, 1
 	je output_fib
 
 fib_loop:
-	add esi, edi
-	xchg esi, edi
+	add rsi, rdi
+	xchg rsi, rdi
 	loop fib_loop
 
 outpub_fib:
-	mov eax, esi
+	mov rax, rsi
 	call _printEAX
-	mov eax, 60
-	mov edi, 0
+	mov rax, 60
+	mov rdi, 0
 	syscall
 
 _printEAX:
-	mov ecx, digitSpace
-	mov ebx, 10
-	mov [ecx], ebx
-	inc ecx
-	mov [digitSpacePos], ecx
+	mov rcx, digitSpace
+	mov rbx, 10
+	mov [rcx], rbx
+	inc rcx
+	mov [digitSpacePos], rcx
 
 _printEAXLoop:
-	mov edx, 0
-	mov ebx, 10
-	div ebx
-	push eax
-	add edx, 48
+	mov rdx, 0
+	mov rbx, 10
+	div rbx
+	push rax
+	add rdx, 48
 
-	mov ecx, [digitSpacePos]
+	mov rcx, [digitSpacePos]
 	mov [ecx], dl
-	inc ecx
-	mov [digitSpace], ecx
+	inc rcx
+	mov [digitSpace], rcx
 
-	pop eax
-	cmp eax, 0
+	pop rax
+	cmp rax, 0
 	jne _printEAXLoop
 
 _printEAXLoop2:
-	mov ecx, [digitSpacePos]
+	mov rcx, [digitSpacePos]
 
-	mov eax, 1
-	mov edi, 1
-	mov esi, ecx
-	mov edx, 1
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, rcx
+	mov rdx, 1
 	syscall
 
-	mov ecx, [digitSpacePos]
-	dec ecx
-	mov [digitSpacepos], ecx
+	mov rcx, [digitSpacePos]
+	dec rcx
+	mov [digitSpacepos], rcx
 
-	cmp ecx, digitSpace
+	cmp rcx, digitSpace
 	jge _printEAXLoop2
 
 	ret
