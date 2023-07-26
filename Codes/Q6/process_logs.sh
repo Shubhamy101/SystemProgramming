@@ -19,6 +19,22 @@ do
     message=""
     timestamps=()
 
+    # Get the date part from the logfile name (e.g., "20220133" from "log_20220133.txt")
+    log_date=$(basename "$logfile" | grep -oE '[0-9]{8}')
+
+    # Extract year, month, and day from log_date
+    log_year="${log_date:0:4}"
+    log_month="${log_date:4:2}"
+    log_day="${log_date:6:2}"
+
+    # Check if the year, month, and day fields are within the valid ranges
+    if ! ( ((log_year >= 1000 && log_year <= 9999)) && 
+           ((log_month >= 1 && log_month <= 12)) && 
+           ((log_day >= 1 && log_day <= 31)) ); then
+        echo "Invalid date in log file: $logfile. Skipping the log file."
+        continue
+    fi
+
     while IFS= read -r line; 
     do
         if [[ $line == Timestamp:* ]]; 
@@ -81,11 +97,6 @@ do
     fi
 
     # Compare log file date timestamp with the filter date
-    log_date=$(basename "$logfile" | grep -oE '[0-9]{8}')
-    log_year="${log_date:0:4}"
-    log_month="${log_date:4:2}"
-    log_day="${log_date:6:2}"
-
     filter_year=$(date -d "$filter_date" "+%Y")
     filter_month=$(date -d "$filter_date" "+%m")
     filter_day=$(date -d "$filter_date" "+%d")
