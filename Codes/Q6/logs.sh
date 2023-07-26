@@ -92,22 +92,26 @@ do
         fi
     done < "$logfile"
 
-    total_diff=0
     num_entries=${#timestamps[@]}
 
-    for (( i=1; i<num_entries; i++ )); 
-    do
-        diff=$((timestamps[i] - timestamps[i - 1]))
-        total_diff=$((total_diff + diff))
-    done
-
-    average_time_diff=$((total_diff / (num_entries - 1)))
-
-    # Check if the current log file has the maximum average time difference
-    if [ $average_time_diff -gt $max_average_diff ]; 
+    if [ $num_entries -gt 1 ]; 
     then
-        max_average_diff=$average_time_diff
-        max_average_diff_filename=$(basename "$logfile")
+        total_diff=0
+
+        for (( i=1; i<num_entries; i++ )); 
+        do
+            diff=$((timestamps[i] - timestamps[i - 1]))
+            total_diff=$((total_diff + diff))
+        done
+
+        average_time_diff=$((total_diff / (num_entries - 1)))
+
+        # Check if the current log file has the maximum average time difference
+        if [ $average_time_diff -gt $max_average_diff ]; 
+        then
+            max_average_diff=$average_time_diff
+            max_average_diff_filename=$(basename "$logfile")
+        fi
     fi
 
 done
