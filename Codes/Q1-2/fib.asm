@@ -2,14 +2,22 @@ section .bss
     digitSpace resb 100
     digitSpacePos resb 8
  
-section .data
-    text db "Hello, World!",10,0
- 
 section .text
     global _start
  
 _start:
  
+    mov rcx, 6
+    mov rax, 1
+    mov rbx, 1
+
+fib:
+    mov rdx, rax
+    add rax, rbx
+    mov rbx, rdx
+
+    loop fib
+
     mov rax, 256
     call _printRAX
  
