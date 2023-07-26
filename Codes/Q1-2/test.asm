@@ -1,4 +1,4 @@
-secion .bss
+section .bss
 	digitSpace resb 100
 	digitSpacePos resb 8
 
@@ -21,7 +21,7 @@ fib_loop:
 	xchg rsi, rdi
 	loop fib_loop
 
-outpub_fib:
+output_fib:
 	mov rax, rsi
 	call _printEAX
 	mov rax, 60
@@ -62,7 +62,7 @@ _printEAXLoop2:
 
 	mov rcx, [digitSpacePos]
 	dec rcx
-	mov [digitSpacepos], rcx
+	mov [digitSpacePos], rcx
 
 	cmp rcx, digitSpace
 	jge _printEAXLoop2
