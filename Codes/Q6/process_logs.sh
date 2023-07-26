@@ -29,6 +29,26 @@ do
     message=""
     timestamps=()
 
+    # Calculate timestamp for the log file
+    while IFS= read -r line; 
+    do
+        if [[ $line == Timestamp:* ]]; 
+        then
+            # Extract timestamp from the log entry
+            timestamp=$(echo "$line" | awk -F ': ' '{print $2}')
+            break
+        fi
+    done < "$logfile"
+
+    # Check if we successfully extracted the timestamp
+    if [ -z "$timestamp" ]; then
+        echo "Error: Unable to extract timestamp from log file: $logfile. Skipping the log file."
+        continue
+    fi
+
+    # Calculate the timestamp from the date string
+    timestamp=$(get_timestamp "$timestamp")
+
     while IFS= read -r line; 
     do
         if [[ $line == Timestamp:* ]]; 
