@@ -1,78 +1,127 @@
 #!/bin/bash
 
-# Step 1: Read all log files in the "logs" directory
-logs_dir="logs"
-filtered_logs="filtered_logs.txt"
+logs_directory="logs"
+output_file="filtered_logs.txt"
+filter_date="2022-01-33 10:00:00"
 
-# Step 2, 3, and 4: Extract, filter, and sort log entries
-for logfile in "$logs_dir"/log_*.txt; do
-    filename=$(basename "$logfile")
-    grep -E '^[0-9]{8} [0-9]{6}: ' "$logfile" | \
-    awk -v filename="$filename" -v cutoff_date="2023-07-01" '
-        BEGIN {
-            print "Processing " filename "..."
-            max_diff = 0
-            total_diff = 0
-            num_entries = 0
-            max_avg_msg_len = 0
-        }
+# Check if the logs directory exists
+if [ ! -d "$logs_directory" ]; 
+then
+    echo "Error: Directory '$logs_directory' does not exist."
+    exit 1
+fi
 
-        {
-            # Step 2: Extract timestamp and message from each log entry
-            timestamp = substr($0, 1, 15)
-            message = substr($0, 17)
+# Remove any existing output file
+rm -f "$output_file"
 
-            # Step 3: Filter out log entries older than the given date
-            if (timestamp >= cutoff_date) {
-                # Step 4: Sort remaining log entries in descending order based on their timestamps
-                log_entries[timestamp] = message
+# Variables to store maximum average time difference and the corresponding filename
+max_average_diff=0
+max_average_diff_filename=""
 
-                # Calculate time difference for average calculation
-                if (prev_timestamp != "") {
-                    diff = mktime(substr(timestamp, 1, 4) " " substr(timestamp, 5, 2) " " substr(timestamp, 7, 2) " " substr(timestamp, 9, 2) " " substr(timestamp, 11, 2) " " substr(timestamp, 13, 2)) -
-                           mktime(substr(prev_timestamp, 1, 4) " " substr(prev_timestamp, 5, 2) " " substr(prev_timestamp, 7, 2) " " substr(prev_timestamp, 9, 2) " " substr(prev_timestamp, 11, 2) " " substr(prev_timestamp, 13, 2))
-                    total_diff += diff
-                    num_entries++
-                    if (diff > max_diff) {
-                        max_diff = diff
-                    }
-                }
-                prev_timestamp = timestamp
+# Variables to store longest average message length and the corresponding filename
+max_avg_msg_len=0
+max_avg_msg_len_file=""
 
-                # Track message length for average calculation
-                total_msg_len += length(message)
-                num_msgs++
-                avg_msg_len = total_msg_len / num_msgs
-                if (avg_msg_len > max_avg_msg_len) {
-                    max_avg_msg_len = avg_msg_len
-                }
-            }
-        }
+# Process each log file
+for logfile in "$logs_directory"/log_*.txt; 
+do
+    # Extract the timestamp and message from each log entry
+    timestamp=""
+    message=""
 
-        END {
-            # Step 5: Write the sorted log entries to a new file named "filtered_logs.txt"
-            print "Filename: " filename > "'"$filtered_logs"'"
-            print "Maximum Average Time Difference: " max_diff " seconds." > "'"$filtered_logs"'"
-            print "Longest Average Message Length: " max_avg_msg_len " characters." > "'"$filtered_logs"'"
+    while IFS= read -r line; 
+    do
+        if [[ $line == Timestamp:* ]]; 
+        then
+            # Extract timestamp from the log entry
+            timestamp=$(echo "$line" | awk -F ': ' '{print $2}')
+        fi
+        if [[ $line == Message:* ]]; 
+        then
+            # Extract message from the log entry
+            message=$(echo "$line" | awk -F ': ' '{print $2}')
+        fi
+    done < "$logfile"
 
-            for (timestamp in log_entries) {
-                print "Timestamp: " timestamp > "'"$filtered_logs"'"
-                print "Message: " log_entries[timestamp] > "'"$filtered_logs"'"
-            }
+    # Check if the timestamp is older than the filter date
+    if [[ "$timestamp" < "$filter_date" ]];
+    then
+        echo "Timestamp: $timestamp" >> "$output_file"
+        echo "Message: $message" >> "$output_file"
+    fi
 
-            # Step 6: Calculate average time difference between consecutive log entries
-            if (num_entries > 0) {
-                avg_time_diff = total_diff / num_entries
-                print "Average Time Difference: " avg_time_diff " seconds." > "'"$filtered_logs"'"
-            }
-        }
-    '
+    # Calculate average message length
+    total_msg_len=0
+    num_msgs=0
+
+    while IFS= read -r line; 
+    do
+        if [[ $line == Message:* ]]; 
+        then
+            # Extract message from the log entry and calculate its length
+            message=$(echo "$line" | awk -F ': ' '{print $2}')
+            msg_len=${#message}
+            total_msg_len=$((total_msg_len + msg_len))
+            num_msgs=$((num_msgs + 1))
+        fi
+    done < "$logfile"
+
+    if [ $num_msgs -gt 0 ]; 
+    then
+        avg_msg_len=$((total_msg_len / num_msgs))
+
+        # Check if the current log file has the longest average message length
+        if [ $avg_msg_len -gt $max_avg_msg_len ]; 
+        then
+            max_avg_msg_len=$avg_msg_len
+            max_avg_msg_len_file=$(basename "$logfile")
+        fi
+    fi
+
+    # Calculate average time difference
+    timestamps=()
+
+    while IFS= read -r line; 
+    do
+        if [[ $line == Timestamp:* ]]; 
+        then
+            # Extract timestamp from the log entry and convert it to Unix timestamp
+            timestamp=$(echo "$line" | awk -F ': ' '{print $2}')
+            timestamp=$(date -d "${timestamp}" "+%s")
+            timestamps+=($timestamp)
+        fi
+    done < "$logfile"
+
+    total_diff=0
+    num_entries=${#timestamps[@]}
+
+    for (( i=1; i<num_entries; i++ )); 
+    do
+        diff=$((timestamps[i] - timestamps[i - 1]))
+        total_diff=$((total_diff + diff))
+    done
+
+    average_time_diff=$((total_diff / (num_entries - 1)))
+
+    # Check if the current log file has the maximum average time difference
+    if [ $average_time_diff -gt $max_average_diff ]; 
+    then
+        max_average_diff=$average_time_diff
+        max_average_diff_filename=$(basename "$logfile")
+    fi
+
 done
 
-# Step 7 and 8: Find the log file with the maximum average time difference
-max_avg_time_diff_file=$(grep -r "Maximum Average Time Difference" "$filtered_logs" | sort -k5 -n -r | head -1 | awk -F ': ' '{print $2}')
-echo "File with Maximum Average Time Difference: $max_avg_time_diff_file"
+# Print and save the output for the log file with the maximum average time difference
+echo "Filename: $(basename "$max_average_diff_filename")"
+echo "Maximum Average Time Difference: ${max_average_diff} seconds."
 
-# Step 9 and 10: Find the log file with the longest average message length
-max_avg_msg_len_file=$(grep -r "Longest Average Message Length" "$filtered_logs" | sort -k5 -n -r | head -1 | awk -F ': ' '{print $2}')
-echo "File with Longest Average Message Length: $max_avg_msg_len_file"
+# Print and save the output for the log file with the longest average message length
+echo "Filename: $(basename "$max_avg_msg_len_file")"
+echo "Longest Average Message Length: ${max_avg_msg_len} characters."
+
+# Save the output to a file
+echo "Filename: $(basename "$max_average_diff_filename")" > "output.txt"
+echo "Maximum Average Time Difference: ${max_average_diff} seconds." >> "output.txt"
+echo "Filename: $(basename "$max_avg_msg_len_file")" >> "output.txt"
+echo "Longest Average Message Length: ${max_avg_msg_len} characters." >> "output.txt"
