@@ -2,9 +2,6 @@ section .bss
     digitSpace resb 100
     digitSpacePos resb 8
 
-section .data
-    text db "Hello, World!", 10, 0
-
 section .text
     global _start
 
@@ -27,11 +24,20 @@ fib_loop:
     mov rax, rsi
     call _printRAX
 
+    ; Print a newline character
+    mov rax, 1         ; syscall number for sys_write
+    mov rdi, 1         ; file descriptor 1 (stdout)
+    mov rsi, newline   ; address of the newline character
+    mov rdx, 1         ; length of the string (1 character)
+    syscall           ; make the syscall
+
     ; Exit the program
     mov rax, 60
     mov rdi, 0
     syscall
 
+section .data
+    newline db 10      ; Newline character '\n', ASCII code 10
 
 _printRAX:
     mov rcx, digitSpace
