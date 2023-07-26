@@ -41,3 +41,30 @@ _printEAXLoop:
 	div ebx
 	push eax
 	add edx, 48
+
+	mov ecx, [digitSpacePos]
+	mov [ecx], dl
+	inc ecx
+	mov [digitSpace], ecx
+
+	pop eax
+	cmp eax, 0
+	jne _printEAXLoop
+
+_printEAXLoop2:
+	mov ecx, [digitSpacePos]
+
+	mov eax, 1
+	mov edi, 1
+	mov esi, ecx
+	mov edx, 1
+	syscall
+
+	mov ecx, [digitSpacePos]
+	dec ecx
+	mov [digitSpacepos], ecx
+
+	cmp ecx, digitSpace
+	jge _printEAXLoop2
+
+	ret
