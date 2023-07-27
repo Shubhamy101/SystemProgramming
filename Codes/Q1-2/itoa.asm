@@ -15,4 +15,4 @@ _start:
     int 0x80
     
     mov rax, 1
-    int ox80
+    int 0x80
